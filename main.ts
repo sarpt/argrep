@@ -65,7 +65,7 @@ for (const rootPath of providedRootPaths) {
     fileName: fileNameRegexes,
     extension: extensionsRegexes
   };
-  const filePaths = await avfs.extractFiles(rootPath, regexes);
+  const filePaths = await avfs.extractFilesRecursive(rootPath, regexes);
 
   if (verbose) {
     console.info(`[INF] Found ${filePaths.length} files to grep in path ${rootPath}`);
