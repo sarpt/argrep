@@ -1,5 +1,5 @@
 import { walk } from "https://deno.land/std@0.120.0/fs/mod.ts";
-import { basename, extname } from "https://deno.land/std@0.120.0/path/mod.ts";
+import { basename, extname, join } from "https://deno.land/std@0.120.0/path/mod.ts";
 
 import { LibArchive } from "./libarchive.ts";
 import { LibMagic } from "./libmagic.ts";
@@ -18,10 +18,10 @@ type regexes = {
 };
 
 export class Avfs {
-  constructor(private libArchive: LibArchive, private libMagic: LibMagic) {}
+  constructor(private libArchive: LibArchive, private libMagic: LibMagic, private tempdir: string) {}
 
   async extractFilesRecursive(archivePath: string, regexes?: regexes): Promise<string[]> {
-    const outPath = `/tmp/argrep/${basename(archivePath)}`;
+    const outPath = join(this.tempdir, basename(archivePath));
 
     const result = this.libArchive.extractFiles(archivePath, outPath);
     if (result.errMsg) {
@@ -49,11 +49,6 @@ export class Avfs {
     for (const archive of archives) {
       const archiveFiles = await this.extractFilesRecursive(archive, regexes);
       files.push(...archiveFiles);
-      try {
-        Deno.remove(archive);
-      } catch (_err) {
-        console.error(`could not remove temporary file ${archive}`);
-      }
     }
 
     return files;
