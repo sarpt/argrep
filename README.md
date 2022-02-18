@@ -2,6 +2,8 @@
 
 Crude and quick implementation of tool to run `grep` recursively through archives.
 
+An extension (or fork, or variant) of https://github.com/sarpt/avfsgrep 
+
 ### execution example
 
 Run...
