@@ -15,7 +15,10 @@ type Arguments = {
   fr?: string | string[],         // --fr : filename regex
   v?: string,                     // -v : verbose logging
   er?: string | string[],         // --er : extension regex
+  td?: string,                    // --td : temporary directory for archives extraction
 } & Args;
+
+const tempDirPrefix = 'argrep_';
 
 const args = parse(Deno.args, { "--": true }) as unknown as Arguments;
 const homeDir = dir('home');
@@ -48,10 +51,16 @@ if (libMagicErr) {
   Deno.exit(1);
 }
 
-const avfs = new Avfs(libarchive, libmagic);
+const tempDir = args.td
+  ? args.td
+  : await Deno.makeTempDir({ prefix: tempDirPrefix });
+if (verbose) {
+  console.info(`[INF] using '${tempDir}' as temporary path for archive extraction`);
+}
+
+const avfs = new Avfs(libarchive, libmagic, tempDir);
 
 const allFilePaths: string[] = [];
-
 for (const rootPath of providedRootPaths) {
   try {
     await Deno.stat(rootPath);
@@ -89,6 +98,12 @@ const results = await grepFiles(
     }
   },
 );
+
+try {
+  Deno.remove(tempDir, { recursive: true });
+} catch (_err) {
+  console.error(`[ERR] Could not delete temporary dir ${tempDir}`);
+}
 
 if (results.length === 0) {
   if (verbose) {
