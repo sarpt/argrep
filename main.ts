@@ -60,6 +60,7 @@ if (verbose) {
 
 const avfs = new Avfs(libarchive, libmagic, tempDir);
 
+const sourcePathsToTempPaths = new Map<string, string>();
 const allFilePaths: string[] = [];
 for (const rootPath of providedRootPaths) {
   try {
@@ -80,6 +81,9 @@ for (const rootPath of providedRootPaths) {
     console.info(`[INF] Found ${filePaths.length} files to grep in path ${rootPath}`);
   }
 
+  filePaths.forEach(filePath => {
+    sourcePathsToTempPaths.set(filePath, filePath.replace(tempDir, rootPath));
+  }); 
   allFilePaths.push(...filePaths);
 }
 
@@ -114,7 +118,7 @@ if (results.length === 0) {
 }
 
 for (const result of results) {
-  console.log(`${result.path}#${result.line}: ${result.match}`);
+  console.log(`${sourcePathsToTempPaths.get(result.path)}#${result.line}: ${result.match}`);
 }
 
 libmagic.close();
