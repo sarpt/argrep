@@ -1,11 +1,12 @@
 import dir from "https://deno.land/x/dir@v1.2.0/mod.ts";
 import { parse, Args } from "https://deno.land/std@0.120.0/flags/mod.ts";
 
-import { grepFiles } from './grep.ts';
-import { Avfs } from "./avfs.ts";
+import { grepFile, result } from './grep.ts';
+import { shouldSkipFile } from './regexes.ts';
 import { forceArrayArgument } from "./utils.ts";
 import { LibMagic } from "./libmagic.ts";
-import { LibArchive } from "./libarchive.ts";
+import { LibArchive } from "./libarchive/libarchive.ts";
+import { basename, join } from "https://deno.land/std@0.125.0/path/mod.ts";
 
 type Arguments = {
   ['--']: string[],               // arguments to grep after --
@@ -43,9 +44,9 @@ const fileNameRegexes = forceArrayArgument(args.fr);
 const extensionsRegexes = forceArrayArgument(args.er);
 const verbose = !!(args.v);
 
-const libarchive = new LibArchive();
-const libmagic = new LibMagic();
-const { errMsg: libMagicErr } = libmagic.open();
+const libArchive = new LibArchive();
+const libMagic = new LibMagic();
+const { errMsg: libMagicErr } = libMagic.open();
 if (libMagicErr) {
   console.error(`[ERR] could not open libmagic for format deduction: ${libMagicErr}`);
   Deno.exit(1);
@@ -58,10 +59,8 @@ if (verbose) {
   console.info(`[INF] using '${tempDir}' as temporary path for archive extraction`);
 }
 
-const avfs = new Avfs(libarchive, libmagic, tempDir);
-
 const sourcePathsToTempPaths = new Map<string, string>();
-const allFilePaths: string[] = [];
+const allResults: result[] = [];
 for (const rootPath of providedRootPaths) {
   try {
     await Deno.stat(rootPath);
@@ -75,33 +74,35 @@ for (const rootPath of providedRootPaths) {
     fileName: fileNameRegexes,
     extension: extensionsRegexes
   };
-  const filePaths = await avfs.extractFilesRecursive(rootPath, regexes);
 
-  if (verbose) {
-    console.info(`[INF] Found ${filePaths.length} files to grep in path ${rootPath}`);
-  }
-
-  filePaths.forEach(filePath => {
-    sourcePathsToTempPaths.set(filePath, filePath.replace(tempDir, rootPath));
-  }); 
-  allFilePaths.push(...filePaths);
-}
-
-const results = await grepFiles(
-  allFilePaths,
-  {
-    options: args['--'],
-    regex: grepRegex,
-    isMimeType: (mime: string, filePath: string): boolean => {
-      const { errMsg, result } = libmagic.file(filePath);
-      if (errMsg) {
-        return false;
-      }
-
-      return result === mime;
+  const outPath = join(tempDir, basename(rootPath));
+  for await(const entry of libArchive.walk(rootPath, outPath)) {
+    if (entry.errMsg) {
+      console.error(`[ERR] ${entry.errMsg}`);
+      continue;
     }
-  },
-);
+    if (entry.isArchive) continue;
+    if (shouldSkipFile(entry.path, regexes)) continue;
+
+    sourcePathsToTempPaths.set(entry.path, entry.path.replace(tempDir, rootPath));
+    const results = await grepFile(
+      entry.path,
+      {
+        options: args['--'],
+        regex: grepRegex,
+        isMimeType: (mime: string, filePath: string): boolean => {
+          const { errMsg, result } = libMagic.file(filePath);
+          if (errMsg) {
+            return false;
+          }
+
+          return result === mime;
+        }
+      },
+    );
+    allResults.push(...results);
+  }
+}
 
 try {
   Deno.remove(tempDir, { recursive: true });
@@ -109,16 +110,16 @@ try {
   console.error(`[ERR] Could not delete temporary dir ${tempDir}`);
 }
 
-if (results.length === 0) {
+if (allResults.length === 0) {
   if (verbose) {
     console.warn(`[WRN] No matches found`);
   }
-  libmagic.close();
+  libMagic.close();
   Deno.exit(0);
 }
 
-for (const result of results) {
+for (const result of allResults) {
   console.log(`${sourcePathsToTempPaths.get(result.path)}#${result.line}: ${result.match}`);
 }
 
-libmagic.close();
+libMagic.close();

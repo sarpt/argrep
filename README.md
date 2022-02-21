@@ -8,13 +8,13 @@ An extension (or fork, or variant) of https://github.com/sarpt/avfsgrep
 
 Run...
 
-```deno run --unstable --allow-ffi --allow-env --allow-read --allow-run main.ts </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]```
+```deno run --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]```
 
 ... or install/compile:
 
-- ```deno install --unstable --allow-ffi --allow-env --allow-read --allow-run main.ts```
+- ```deno install --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts```
 
-- ```deno compile --unstable --allow-ffi --allow-env --allow-read --allow-run main.ts```
+- ```deno compile --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts```
 
 and then run
 
@@ -33,9 +33,10 @@ Currently only linux is supported (due to dependence on `libmagic` & `libarchive
 ### permissions
 
 - `unstable` & `allow-ffi` - for FFI (format deduction using `libmagic`, archive extraction using `libarchive`)
-- `allow-env` - for reading home directory path
+- `allow-env` - for reading home and tmp directory path
 - `allow-read` - for reading directories and files
 - `allow-run` - for executing `grep`, `xzgrep` & `lzgrep`
+- `allow-write` - for archives extraction with `libarchive` to descend into archives recursively
 
 ### arguments
 
