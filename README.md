@@ -1,28 +1,32 @@
 # argrep - run grep recursively on archives
 
-Crude and quick implementation of tool to run `grep` recursively through archives.
+Crude and quick implementation of a tool to run `grep` recursively through
+archives.
 
-An extension (or fork, or variant) of https://github.com/sarpt/avfsgrep 
+An extension (or fork, or variant) of https://github.com/sarpt/avfsgrep
 
 ### execution example
 
 Run...
 
-```deno run --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]```
+`deno run --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]`
 
 ... or install/compile:
 
-- ```deno install --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts```
+- `deno install --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts`
 
-- ```deno compile --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts```
+- `deno compile --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts`
 
 and then run
 
-```argrep </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]```
+`argrep </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]`
 
 ### dependencies for running
 
-Currently only linux is supported (due to dependence on `libmagic` & `libarchive` being present in default `ldconfig` aliases path for file format deduction using FFI). Probably will add some switch or something for extension-based deduction or other method...
+Currently only linux is supported (due to dependence on `libmagic` &
+`libarchive` being present in default `ldconfig` aliases path for file format
+deduction using FFI). Probably will add some switch or something for
+extension-based deduction or other method...
 
 - `deno` - tested on 1.17.1 and up
 - `grep` - just a grep
@@ -32,11 +36,13 @@ Currently only linux is supported (due to dependence on `libmagic` & `libarchive
 
 ### permissions
 
-- `unstable` & `allow-ffi` - for FFI (format deduction using `libmagic`, archive extraction using `libarchive`)
+- `unstable` & `allow-ffi` - for FFI (format deduction using `libmagic`, archive
+  extraction using `libarchive`)
 - `allow-env` - for reading home and tmp directory path
 - `allow-read` - for reading directories and files
 - `allow-run` - for executing `grep`, `xzgrep` & `lzgrep`
-- `allow-write` - for archives extraction with `libarchive` to descend into archives recursively
+- `allow-write` - for archives extraction with `libarchive` to descend into
+  archives recursively
 
 ### arguments
 
@@ -49,5 +55,6 @@ Currently only linux is supported (due to dependence on `libmagic` & `libarchive
 
 ### unnamed arguments
 
-- before `--` - arguments (multiple) are treated as root path to directory/archive to be checked recursively.
+- before `--` - arguments (multiple) are treated as root path to
+  directory/archive to be checked recursively.
 - after `--` - arguments (multiple) are passed to `grep` as is.
