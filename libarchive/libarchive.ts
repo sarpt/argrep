@@ -99,7 +99,11 @@ export class LibArchive {
     outPath: string,
     keepUnpackedFiles?: boolean,
   ): Generator<ArchiveWalkEntry, Result, void> {
-    const contents = this.iterateContents(archivePath, outPath, keepUnpackedFiles);
+    const contents = this.iterateContents(
+      archivePath,
+      outPath,
+      keepUnpackedFiles,
+    );
     for (const entry of contents) {
       if (entry.errMsg) {
         return {

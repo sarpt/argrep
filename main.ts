@@ -4,8 +4,9 @@ import { Args, parse } from "https://deno.land/std@0.120.0/flags/mod.ts";
 import { grepFile, result } from "./grep.ts";
 import { unmatchedByRegexes } from "./regexes.ts";
 import { forceArrayArgument } from "./utils.ts";
-import { LibMagic } from "./libmagic.ts";
+import { defaultLibmagicPath, LibMagic } from "./libmagic.ts";
 import { LibArchive } from "./libarchive/libarchive.ts";
+import { defaultLibarchivePath } from "./libarchive/consts.ts";
 import { basename, join } from "https://deno.land/std@0.125.0/path/mod.ts";
 
 type Arguments = {
@@ -17,6 +18,8 @@ type Arguments = {
   v?: string; // -v : verbose logging
   er?: string | string[]; // --er : extension regex
   td?: string; // --td : temporary directory for archives extraction
+  libmagic?: string; // --libmagic : path to libmagic library
+  libarchive?: string; // --libarchive : path to libarchive library
 } & Args;
 
 const tempDirPrefix = "argrep_";
@@ -43,9 +46,24 @@ const fileNameRegexes = forceArrayArgument(args.fr);
 const extensionsRegexes = forceArrayArgument(args.er);
 const verbose = !!(args.v);
 
-const libArchive = new LibArchive();
+const libArchivePath = args.libarchive
+  ? args.libarchive
+  : defaultLibarchivePath;
+if (verbose) {
+  console.info(
+    `[INF] using '${libArchivePath}' as libarchive path`,
+  );
+}
+const libArchive = new LibArchive({ libpath: libArchivePath });
+
+const libMagicPath = args.libmagic ? args.libmagic : defaultLibmagicPath;
+if (verbose) {
+  console.info(
+    `[INF] using '${libMagicPath}' as libmagic path`,
+  );
+}
 const libMagic = new LibMagic();
-const { errMsg: libMagicErr } = libMagic.open();
+const { errMsg: libMagicErr } = libMagic.open(libMagicPath);
 if (libMagicErr) {
   console.error(
     `[ERR] could not open libmagic for format deduction: ${libMagicErr}`,
