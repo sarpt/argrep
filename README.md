@@ -21,12 +21,22 @@ and then run
 
 `argrep </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]`
 
-### dependencies for running
+### docker
 
-Currently only linux is supported (due to dependence on `libmagic` &
-`libarchive` being present in default `ldconfig` aliases path for file format
-deduction using FFI). Probably will add some switch or something for
-extension-based deduction or other method...
+Provided Dockerfile compiles `argrep` binary using debian variant of deno docker
+image and prepares a debian environment with all necessary dependencies met.
+It's the preferred way of running this tool since it has all dependencies and
+library paths provided/ensured during image build process.
+
+Example usage (ran from the directory where `Dockerfile` is):
+
+- `docker build . -t argrep:latest`
+- `docker run -it --rm -v /path/to/directory/with/archives/on/local/machine:/mnt argrep:latest -r file /mnt/filename`
+
+When running the docker image `libmagic` and `libarchive` arguments are
+provided/hardcoded in the Dockerfile and there's no need to provide them again.
+
+### dependencies for running
 
 - `deno` - tested on 1.17.1 and up
 - `grep` - just a grep
@@ -52,6 +62,10 @@ extension-based deduction or other method...
 - `--fr` : (list) filename regexes
 - `-v` : verbose logging
 - `--er` : (list) extension regexes
+- `--libarchive`: path to libarchive library. When not provided,
+  `/usr/lib/libarchive.so` is used by default
+- `--libmagic`: path to libmagic library. When not provided,
+  `/usr/lib/libmagic.so` is used by default
 
 ### unnamed arguments
 
