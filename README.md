@@ -3,7 +3,11 @@
 Crude and quick implementation of a tool to run `grep` recursively through
 archives.
 
-An extension (or fork, or variant) of https://github.com/sarpt/avfsgrep
+A successor of https://github.com/sarpt/avfsgrep, which used `avfs` as a quick
+way to solve archive-handling business-logic. With `libarchive` usable with FFI
+in `deno` there's no need to use `avfsgrep` anymore (if anything, issues with
+FUSE in docker images make `argrep` way easier to use than `avfsgrep` which is
+dependent on `avfs` FUSE-based implementation).
 
 ### execution example
 
@@ -56,16 +60,19 @@ provided/hardcoded in the Dockerfile and there's no need to provide them again.
 
 ### arguments
 
-- `-i, --i` : input file (ignored when unnamed arguments before `--` provided)
-- `-r, --r` : regex for `grep` and its variants
-- `--pr` : (list) path regexes
-- `--fr` : (list) filename regexes
-- `-v` : verbose logging
-- `--er` : (list) extension regexes
+- `-r, --r` : regex for `grep` and its variants. It's mandatory to provide it.
+- `-i, --i` : input file. Mandatory, unless unnamed arguments before `--`
+  provided. Ignored when unnamed arguments before `--` provided.
+- `--pr` : (list) path regexes. Accepts JS regexp patterns.
+- `--fr` : (list) filename regexes. Accepts JS regexp patterns.
+- `-v` : verbose logging. `false` by default.
+- `--ignore-invalid-regex` : do not exit when invalid regex pattern encountered.
+  Invalid regexes are ignored, but correct ones are tested. `false` by default.
+- `--er` : (list) extension regexes. Accepts JS regexp patterns.
 - `--libarchive`: path to libarchive library. When not provided,
-  `/usr/lib/libarchive.so` is used by default
+  `/usr/lib/libarchive.so` is used by default.
 - `--libmagic`: path to libmagic library. When not provided,
-  `/usr/lib/libmagic.so` is used by default
+  `/usr/lib/libmagic.so` is used by default.
 
 ### unnamed arguments
 
