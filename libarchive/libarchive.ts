@@ -161,10 +161,16 @@ export class LibArchive {
       if (this.isResultEof(r)) break;
 
       if (this.isResultWarn(r)) {
-        console.warn(this.getArchiveError(archive));
+        console.warn(
+          `[WRN] read next header: ${this.getArchiveError(archive)}`,
+        );
       } else if (!this.isResultOk(r)) {
-        console.error(this.getArchiveError(archive));
-        continue;
+        return {
+          errMsg:
+            `archive "${archivePath}" iteration failed - unsuccessful read of the next header: ${
+              this.getArchiveError(archive)
+            }`,
+        };
       }
 
       const archiveEntry = new Deno.UnsafePointer(archive_entry_address[0]);
@@ -260,7 +266,7 @@ export class LibArchive {
   }
 
   private copyData(ar: Deno.UnsafePointer, aw: Deno.UnsafePointer): number {
-    let r: number;
+    let r = 0;
 
     while (true) {
       const buff = new BigUint64Array(1);
@@ -289,7 +295,7 @@ export class LibArchive {
       ) as number;
 
       if (r < ArchiveResults.OK) {
-        console.error(this.getArchiveError(aw));
+        console.error(`[ERR] copyData failure: ${this.getArchiveError(aw)}`);
 
         return r;
       }
