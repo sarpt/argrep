@@ -12,11 +12,11 @@ import { basename, join } from "https://deno.land/std@0.125.0/path/mod.ts";
 type Arguments = {
   ["--"]: string[]; // arguments to grep after --
   i?: string | string[]; // -i, --i : input file
-  r?: string; // -r, --r : regex for grep
-  pr?: string | string[]; // --pr : path regex
-  fr?: string | string[]; // --fr : filename regex
+  e?: string; // -e, --e : regex pattern for grep
+  pe?: string | string[]; // --pe : path regex patterns
+  fe?: string | string[]; // --fe : filename regex patterns
   v?: boolean; // -v : verbose logging
-  er?: string | string[]; // --er : extension regex
+  ee?: string | string[]; // --ee : extension regex patterns
   td?: string; // --td : temporary directory for archives extraction
   libmagic?: string; // --libmagic : path to libmagic library
   libarchive?: string; // --libarchive : path to libarchive library
@@ -32,9 +32,9 @@ if (!homeDir) {
   Deno.exit(1);
 }
 
-const grepRegex = args.r;
-if (!grepRegex) {
-  console.error("[ERR] grep regex not provided");
+const grepRegexPatterns = forceArrayArgument(args.e);
+if (grepRegexPatterns.length < 1) {
+  console.error("[ERR] grep regex patterns not provided");
   Deno.exit(1);
 }
 
@@ -79,16 +79,16 @@ if (verbose) {
 }
 
 const ignoreInvalidRegex = args["ignore-invalid-regex"];
-const pathPatterns = forceArrayArgument(args.pr);
+const pathPatterns = forceArrayArgument(args.pe);
 const { regexes: pathRegexes, errMsgs: pathRegexesErrMsgs } = patternsToRegexes(
   pathPatterns,
 );
 
-const fileNamePatterns = forceArrayArgument(args.fr);
+const fileNamePatterns = forceArrayArgument(args.fe);
 const { regexes: fileNameRegexes, errMsgs: fileNameRegexesErrMsgs } =
   patternsToRegexes(fileNamePatterns);
 
-const extensionPatterns = forceArrayArgument(args.er);
+const extensionPatterns = forceArrayArgument(args.ee);
 const { regexes: extensionRegexes, errMsgs: extensionRegexesErrMsgs } =
   patternsToRegexes(extensionPatterns);
 
@@ -144,7 +144,7 @@ for (const rootPath of providedRootPaths) {
       entry.path,
       {
         options: args["--"],
-        regex: grepRegex,
+        regexPatterns: grepRegexPatterns,
         isMimeType: (mime: string, filePath: string): boolean => {
           const { errMsg, result } = libMagic.file(filePath);
           if (errMsg) {
@@ -155,6 +155,14 @@ for (const rootPath of providedRootPaths) {
         },
       },
     );
+
+    for (const result of results) {
+      console.log(
+        `${
+          sourcePathsToTempPaths.get(result.path)
+        }#${result.line}: ${result.match}`,
+      );
+    }
     allResults.push(...results);
   }
 }
@@ -171,14 +179,6 @@ if (allResults.length === 0) {
   }
   libMagic.close();
   Deno.exit(0);
-}
-
-for (const result of allResults) {
-  console.log(
-    `${
-      sourcePathsToTempPaths.get(result.path)
-    }#${result.line}: ${result.match}`,
-  );
 }
 
 libMagic.close();
