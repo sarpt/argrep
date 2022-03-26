@@ -23,7 +23,7 @@ Run...
 
 and then run
 
-`argrep </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]`
+`argrep </path/to/dir or /path/to/archive> -e <grep regex> [-- <grep options>]`
 
 ### docker
 
@@ -35,7 +35,7 @@ library paths provided/ensured during image build process.
 Example usage (ran from the directory where `Dockerfile` is):
 
 - `docker build . -t argrep:latest`
-- `docker run -it --rm -v /path/to/directory/with/archives/on/local/machine:/mnt argrep:latest -r file /mnt/filename`
+- `docker run -it --rm -v /path/to/directory/with/archives/on/local/machine:/mnt argrep:latest -e pattern /mnt/filename`
 
 When running the docker image `libmagic` and `libarchive` arguments are
 provided/hardcoded in the Dockerfile and there's no need to provide them again.
@@ -60,15 +60,16 @@ provided/hardcoded in the Dockerfile and there's no need to provide them again.
 
 ### arguments
 
-- `-r, --r` : regex for `grep` and its variants. It's mandatory to provide it.
+- `-e, --e` : (list) regex pattern for `grep` and its variants. It's mandatory
+  to provide at least one.
 - `-i, --i` : input file. Mandatory, unless unnamed arguments before `--`
   provided. Ignored when unnamed arguments before `--` provided.
-- `--pr` : (list) path regexes. Accepts JS regexp patterns.
-- `--fr` : (list) filename regexes. Accepts JS regexp patterns.
+- `--pe` : (list) path regexe patterns. Accepts JS regexp patterns.
+- `--fe` : (list) filename regexe patterns. Accepts JS regexp patterns.
 - `-v` : verbose logging. `false` by default.
 - `--ignore-invalid-regex` : do not exit when invalid regex pattern encountered.
   Invalid regexes are ignored, but correct ones are tested. `false` by default.
-- `--er` : (list) extension regexes. Accepts JS regexp patterns.
+- `--ee` : (list) extension regexe patterns. Accepts JS regexp patterns.
 - `--libarchive`: path to libarchive library. When not provided,
   `/usr/lib/libarchive.so` is used by default.
 - `--libmagic`: path to libmagic library. When not provided,

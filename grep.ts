@@ -6,6 +6,9 @@ export type result = {
   match: string;
 };
 
+const lineNumberArg = "-n";
+const regexPatternArg = "-e";
+
 const regularGrep = "grep";
 const grepVariants = [
   {
@@ -30,22 +33,27 @@ export async function grepFile(
   filePath: string,
   {
     options,
-    regex,
+    regexPatterns,
     isMimeType,
   }: {
     options: string[];
-    regex: string;
+    regexPatterns: string[];
     isMimeType: isMimeTypeCb;
   },
 ): Promise<result[]> {
   const grep =
     grepVariants.find((variant) => variant.predicate(filePath, isMimeType))
       ?.cmd || regularGrep;
+
+  const regexes = regexPatterns.reduce((acc, pattern) => {
+    return [...acc, regexPatternArg, pattern];
+  }, [] as string[]);
+
   const cmd = [
     grep,
     ...options,
-    "-n",
-    regex,
+    lineNumberArg,
+    ...regexes,
     filePath,
   ];
 
