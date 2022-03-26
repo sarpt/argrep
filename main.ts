@@ -129,7 +129,9 @@ for (const rootPath of providedRootPaths) {
   const outPath = join(tempDir, basename(rootPath));
   for await (const entry of libArchive.walk(rootPath, outPath, false)) {
     if (entry.errMsg) {
-      console.error(`[ERR] ${entry.errMsg}`);
+      console.error(
+        `[ERR] error while walking through the "${rootPath}" file: ${entry.errMsg}`,
+      );
       continue;
     }
     if (entry.isArchive || unmatchedByRegexes(entry.path, regexes)) continue;
