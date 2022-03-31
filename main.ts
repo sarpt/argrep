@@ -1,3 +1,4 @@
+import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
 import dir from "https://deno.land/x/dir@v1.2.0/mod.ts";
 import { Args, parse } from "https://deno.land/std@0.120.0/flags/mod.ts";
 
@@ -138,7 +139,7 @@ for (const rootPath of providedRootPaths) {
 
     sourcePathsToTempPaths.set(
       entry.path,
-      entry.path.replace(tempDir, rootPath),
+      entry.path.replace(tempDir, path.dirname(rootPath)),
     );
     const results = await grepFile(
       entry.path,

@@ -120,7 +120,8 @@ export class LibArchive {
 
       yield { ...entry, isArchive: true };
 
-      const archiveWalker = this.walk(entry.path, outPath, keepUnpackedFiles);
+      const archiveOutPath = path.join(outPath, path.basename(entry.path));
+      const archiveWalker = this.walk(entry.path, archiveOutPath, keepUnpackedFiles);
       for (const archiveEntry of archiveWalker) {
         yield archiveEntry;
       }
