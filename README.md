@@ -13,7 +13,7 @@ dependent on `avfs` FUSE-based implementation).
 
 Run...
 
-`deno run --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts </path/to/dir or /path/to/archive> -r <grep regex> [-- <grep options>]`
+`deno run --unstable --allow-ffi --allow-env --allow-read --allow-write --allow-run main.ts </path/to/dir or /path/to/archive> -e <grep regex> [-- <grep options>]`
 
 ... or install/compile:
 

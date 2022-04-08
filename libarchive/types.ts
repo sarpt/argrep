@@ -60,10 +60,12 @@ export type Options = {
 };
 
 export type ArchiveContentsEntry = {
-  path: string;
+  archivePath: string;
   errMsg?: string;
-  warnMsg?: string;
   extracted: boolean;
+  extractedPath: string;
+  isDirectory: boolean;
+  warnMsg?: string;
 };
 
 export type ArchiveWalkEntry = {

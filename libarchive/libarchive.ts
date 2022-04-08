@@ -94,35 +94,39 @@ export class LibArchive {
     return paths;
   }
 
-  *walk(
+  async *walk(
     archivePath: string,
     outPath: string,
     keepUnpackedFiles?: boolean,
-  ): Generator<ArchiveWalkEntry, Result, void> {
+  ): AsyncGenerator<ArchiveWalkEntry, Result, void> {
     const contents = this.iterateContents(
       archivePath,
       outPath,
       keepUnpackedFiles,
     );
-    for (const entry of contents) {
+    for await (const entry of contents) {
       if (entry.errMsg) {
         return {
           errMsg: entry.errMsg,
         };
       }
 
-      if (!entry.path) break;
+      if (!entry.extractedPath) break;
 
-      if (!this.isArchive(entry.path)) {
+      if (entry.isDirectory || !this.isArchive(entry.extractedPath)) {
         yield { ...entry, isArchive: false };
         continue;
       }
 
       yield { ...entry, isArchive: true };
 
-      const archiveOutPath = path.join(outPath, path.basename(entry.path));
-      const archiveWalker = this.walk(entry.path, archiveOutPath, keepUnpackedFiles);
-      for (const archiveEntry of archiveWalker) {
+      const archiveOutPath = path.join(outPath, entry.archivePath);
+      const archiveWalker = this.walk(
+        entry.extractedPath,
+        archiveOutPath,
+        keepUnpackedFiles,
+      );
+      for await (const archiveEntry of archiveWalker) {
         yield archiveEntry;
       }
     }
@@ -130,11 +134,11 @@ export class LibArchive {
     return {};
   }
 
-  *iterateContents(
+  async *iterateContents(
     archivePath: string,
     outPath: string,
     keepUnpackedFiles?: boolean,
-  ): Generator<ArchiveContentsEntry, Result, void> {
+  ): AsyncGenerator<ArchiveContentsEntry, Result, void> {
     const { archive, errMsg } = this.open(archivePath);
     if (!archive || errMsg) {
       return {
@@ -183,6 +187,7 @@ export class LibArchive {
         makeCString(targetPathname),
       );
 
+      let isDirectory = false;
       let extracted = false;
       let errMsg: string | undefined;
       let warnMsg: string | undefined;
@@ -193,8 +198,17 @@ export class LibArchive {
       } else if (
         (this.lib.symbols.archive_entry_size(archiveEntry) as number) <= 0
       ) {
-        errMsg =
-          `skipping entry '${pathname}' due to size being less or equal zero`;
+        try {
+          const pathInfo = await Deno.stat(targetPathname);
+          isDirectory = pathInfo.isDirectory;
+
+          if (!isDirectory) {
+            warnMsg =
+              `skipping entry '${pathname}' due to size being less or equal zero`;
+          }
+        } catch (err) {
+          errMsg = `error while checking entry '${pathname}': ${err}`;
+        }
       } else {
         r = this.copyData(archive, ext);
 
@@ -209,8 +223,15 @@ export class LibArchive {
         }
       }
 
-      yield { path: targetPathname, errMsg, warnMsg, extracted };
-      if (!keepUnpackedFiles) {
+      yield {
+        archivePath: pathname,
+        extractedPath: targetPathname,
+        isDirectory,
+        errMsg,
+        warnMsg,
+        extracted,
+      };
+      if (!isDirectory && !keepUnpackedFiles) {
         try {
           Deno.remove(targetPathname, { recursive: true });
         } catch (_err) {
