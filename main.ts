@@ -115,6 +115,8 @@ const regexes = {
   extension: extensionRegexes,
 };
 
+const keepUnpackedFiles = false;
+
 const sourcePathsToTempPaths = new Map<string, string>();
 const allResults: result[] = [];
 for (const rootPath of providedRootPaths) {
@@ -128,21 +130,28 @@ for (const rootPath of providedRootPaths) {
   }
 
   const outPath = join(tempDir, basename(rootPath));
-  for await (const entry of libArchive.walk(rootPath, outPath, false)) {
+  for await (
+    const entry of libArchive.walk(rootPath, outPath, keepUnpackedFiles)
+  ) {
     if (entry.errMsg) {
       console.error(
         `[ERR] error while walking through the "${rootPath}" file: ${entry.errMsg}`,
       );
       continue;
     }
-    if (entry.isArchive || unmatchedByRegexes(entry.path, regexes)) continue;
+    if (
+      entry.isDirectory || entry.isArchive ||
+      unmatchedByRegexes(entry.extractedPath, regexes)
+    ) {
+      continue;
+    }
 
     sourcePathsToTempPaths.set(
-      entry.path,
-      entry.path.replace(tempDir, path.dirname(rootPath)),
+      entry.extractedPath,
+      entry.extractedPath.replace(tempDir, path.dirname(rootPath)),
     );
     const results = await grepFile(
-      entry.path,
+      entry.extractedPath,
       {
         options: args["--"],
         regexPatterns: grepRegexPatterns,
@@ -168,10 +177,12 @@ for (const rootPath of providedRootPaths) {
   }
 }
 
-try {
-  Deno.remove(tempDir, { recursive: true });
-} catch (_err) {
-  console.error(`[ERR] Could not delete temporary dir ${tempDir}`);
+if (!keepUnpackedFiles) {
+  try {
+    Deno.remove(tempDir, { recursive: true });
+  } catch (_err) {
+    console.error(`[ERR] Could not delete temporary dir ${tempDir}`);
+  }
 }
 
 if (allResults.length === 0) {
