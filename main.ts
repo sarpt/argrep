@@ -1,14 +1,15 @@
 import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
 import dir from "https://deno.land/x/dir@v1.2.0/mod.ts";
 import { Args, parse } from "https://deno.land/std@0.120.0/flags/mod.ts";
+import { LibArchive } from "https://raw.githubusercontent.com/sarpt/deno-libarchive/master/mod.ts";
 
 import { grepFile, result } from "./grep.ts";
 import { patternsToRegexes, unmatchedByRegexes } from "./regexes.ts";
 import { forceArrayArgument } from "./utils.ts";
 import { defaultLibmagicPath, LibMagic } from "./libmagic.ts";
-import { LibArchive } from "./libarchive/libarchive.ts";
-import { defaultLibarchivePath } from "./libarchive/consts.ts";
 import { basename, join } from "https://deno.land/std@0.125.0/path/mod.ts";
+
+export const defaultLibarchivePath = "/usr/lib/libarchive.so"; // ldconfig aliases path; TODO: either parse ld.so.cache or use ldconfig -p to find this
 
 type Arguments = {
   ["--"]: string[]; // arguments to grep after --

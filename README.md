@@ -64,12 +64,12 @@ provided/hardcoded in the Dockerfile and there's no need to provide them again.
   to provide at least one.
 - `-i, --i` : input file. Mandatory, unless unnamed arguments before `--`
   provided. Ignored when unnamed arguments before `--` provided.
-- `--pe` : (list) path regexe patterns. Accepts JS regexp patterns.
-- `--fe` : (list) filename regexe patterns. Accepts JS regexp patterns.
+- `--pe` : (list) path regex patterns. Accepts JS regexp patterns.
+- `--fe` : (list) filename regex patterns. Accepts JS regexp patterns.
 - `-v` : verbose logging. `false` by default.
 - `--ignore-invalid-regex` : do not exit when invalid regex pattern encountered.
   Invalid regexes are ignored, but correct ones are tested. `false` by default.
-- `--ee` : (list) extension regexe patterns. Accepts JS regexp patterns.
+- `--ee` : (list) extension regex patterns. Accepts JS regexp patterns.
 - `--libarchive`: path to libarchive library. When not provided,
   `/usr/lib/libarchive.so` is used by default.
 - `--libmagic`: path to libmagic library. When not provided,
