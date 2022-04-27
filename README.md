@@ -64,6 +64,7 @@ provided/hardcoded in the Dockerfile and there's no need to provide them again.
   to provide at least one.
 - `-i, --i` : input file. Mandatory, unless unnamed arguments before `--`
   provided. Ignored when unnamed arguments before `--` provided.
+- `--json` : json output. `false` by default.
 - `--pe` : (list) path regex patterns. Accepts JS regexp patterns.
 - `--fe` : (list) filename regex patterns. Accepts JS regexp patterns.
 - `-v` : verbose logging. `false` by default.
