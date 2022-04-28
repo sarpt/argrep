@@ -8,7 +8,13 @@ import { patternsToRegexes, unmatchedByRegexes } from "./regexes.ts";
 import { forceArrayArgument } from "./utils.ts";
 import { defaultLibmagicPath, LibMagic } from "./libmagic.ts";
 import { basename, join } from "https://deno.land/std@0.125.0/path/mod.ts";
-import { JSONConsoleOutput, output, TextConsoleOutput } from "./output.ts";
+import {
+  JSONOutput,
+  output,
+  StandardOutput,
+  TextOutput,
+  UnixSocketOutput,
+} from "./output.ts";
 
 export const defaultLibarchivePath = "/usr/lib/libarchive.so"; // ldconfig aliases path; TODO: either parse ld.so.cache or use ldconfig -p to find this
 
@@ -24,6 +30,7 @@ type Arguments = {
   td?: string; // --td : temporary directory for archives extraction
   libmagic?: string; // --libmagic : path to libmagic library
   libarchive?: string; // --libarchive : path to libarchive library
+  ["unix-socket-path"]?: string; // --unix-socket-path: path to a unix socket file
   ["ignore-invalid-regex"]?: boolean; // --ignore-invalid-regex : exit on incorrect patterns
 } & Args;
 
@@ -31,9 +38,26 @@ const tempDirPrefix = "argrep_";
 
 const args = parse(Deno.args, { "--": true }) as unknown as Arguments;
 
+let parentOut: output;
+const unixSocketPath = args["unix-socket-path"];
+if (unixSocketPath) {
+  const unixout = new UnixSocketOutput();
+  const { err: connectionError } = await unixout.connect(unixSocketPath);
+  if (connectionError) {
+    console.error(
+      `'Could not estabilish connection to unix socket at '${unixSocketPath}': ${connectionError}`,
+    );
+    Deno.exit(1);
+  }
+
+  parentOut = unixout;
+} else {
+  parentOut = new StandardOutput();
+}
+
 const out: output = args.json
-  ? new JSONConsoleOutput()
-  : new TextConsoleOutput();
+  ? new JSONOutput(parentOut)
+  : new TextOutput(parentOut);
 
 const homeDir = dir("home");
 if (!homeDir) {
