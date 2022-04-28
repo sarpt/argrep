@@ -10,6 +10,7 @@ import { defaultLibmagicPath, LibMagic } from "./libmagic.ts";
 import { basename, join } from "https://deno.land/std@0.125.0/path/mod.ts";
 import {
   JSONOutput,
+  logger,
   output,
   StandardOutput,
   TextOutput,
@@ -38,11 +39,11 @@ const tempDirPrefix = "argrep_";
 
 const args = parse(Deno.args, { "--": true }) as unknown as Arguments;
 
-let parentOut: output;
+let outLogger: logger;
 const unixSocketPath = args["unix-socket-path"];
 if (unixSocketPath) {
-  const unixout = new UnixSocketOutput();
-  const { err: connectionError } = await unixout.connect(unixSocketPath);
+  const unixSocketOut = new UnixSocketOutput();
+  const { err: connectionError } = await unixSocketOut.connect(unixSocketPath);
   if (connectionError) {
     console.error(
       `'Could not estabilish connection to unix socket at '${unixSocketPath}': ${connectionError}`,
@@ -50,14 +51,14 @@ if (unixSocketPath) {
     Deno.exit(1);
   }
 
-  parentOut = unixout;
+  outLogger = unixSocketOut;
 } else {
-  parentOut = new StandardOutput();
+  outLogger = new StandardOutput();
 }
 
 const out: output = args.json
-  ? new JSONOutput(parentOut)
-  : new TextOutput(parentOut);
+  ? new JSONOutput(outLogger)
+  : new TextOutput(outLogger);
 
 const homeDir = dir("home");
 if (!homeDir) {
@@ -197,11 +198,11 @@ for (const rootPath of providedRootPaths) {
     );
 
     for (const result of results) {
-      out.log(
-        `${
-          sourcePathsToTempPaths.get(result.path)
-        }#${result.line}: ${result.match}`,
-      );
+      out.result({
+        path: sourcePathsToTempPaths.get(result.path) as string,
+        line: result.line,
+        match: result.match,
+      });
     }
     allResults.push(...results);
   }
