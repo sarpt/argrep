@@ -1,13 +1,21 @@
 import { writeAll } from "https://deno.land/std@0.136.0/streams/mod.ts";
+import { result } from "./grep.ts";
 
-export interface output {
+export interface logger {
   log(data: string): void;
   info(data: string): void;
   error(msg: string): void;
   warn(msg: string): void;
 }
 
-export class StandardOutput implements output {
+export interface output {
+  result(data: result): void;
+  info(data: string): void;
+  error(msg: string): void;
+  warn(msg: string): void;
+}
+
+export class StandardOutput implements logger {
   log(data: string): void {
     const text = new TextEncoder().encode(data);
     writeAll(Deno.stdout, text);
@@ -29,7 +37,7 @@ export class StandardOutput implements output {
   }
 }
 
-export class UnixSocketOutput implements output {
+export class UnixSocketOutput implements logger {
   private conn?: Deno.Conn;
 
   async connect(path: string): Promise<{ err?: string }> {
@@ -64,41 +72,42 @@ export class UnixSocketOutput implements output {
 }
 
 export class TextOutput implements output {
-  constructor(private parentOut: output) {}
+  constructor(private logger: logger) {}
 
-  log(data: string): void {
-    this.parentOut.log(`${data}\n`);
+  result(result: result): void {
+    const resultText = `${result.path}#${result.line}: ${result.match}`;
+    this.logger.log(`${resultText}\n`);
   }
 
   info(data: string): void {
-    this.parentOut.info(`[INF] ${data}\n`);
+    this.logger.info(`[INF] ${data}\n`);
   }
 
   error(msg: string): void {
-    this.parentOut.error(`[ERR] ${msg}\n`);
+    this.logger.error(`[ERR] ${msg}\n`);
   }
 
   warn(msg: string): void {
-    this.parentOut.warn(`[WRN] ${msg}\n`);
+    this.logger.warn(`[WRN] ${msg}\n`);
   }
 }
 
 export class JSONOutput implements output {
-  constructor(private parentOut: output) {}
+  constructor(private logger: logger) {}
 
-  log(data: string): void {
-    this.parentOut.log(JSON.stringify({ data }));
+  result(data: result): void {
+    this.logger.log(`${JSON.stringify({ ...data })}\n`);
   }
 
-  info(data: string): void {
-    this.parentOut.log(JSON.stringify({ data }));
+  info(msg: string): void {
+    this.logger.log(`${JSON.stringify({ info: msg })}\n`);
   }
 
   error(msg: string): void {
-    this.parentOut.error(JSON.stringify({ err: msg }));
+    this.logger.error(`${JSON.stringify({ err: msg })}\n`);
   }
 
   warn(msg: string): void {
-    this.parentOut.warn(JSON.stringify({ wrn: msg }));
+    this.logger.warn(`${JSON.stringify({ wrn: msg })}\n`);
   }
 }
