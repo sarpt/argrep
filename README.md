@@ -62,19 +62,22 @@ provided/hardcoded in the Dockerfile and there's no need to provide them again.
 
 - `-e, --e` : (list) regex pattern for `grep` and its variants. It's mandatory
   to provide at least one.
+- `--ee` : (list) extension regex patterns. Accepts JS regexp patterns.
+- `--fe` : (list) filename regex patterns. Accepts JS regexp patterns.
 - `-i, --i` : input file. Mandatory, unless unnamed arguments before `--`
   provided. Ignored when unnamed arguments before `--` provided.
-- `--json` : json output. `false` by default.
-- `--pe` : (list) path regex patterns. Accepts JS regexp patterns.
-- `--fe` : (list) filename regex patterns. Accepts JS regexp patterns.
-- `-v` : verbose logging. `false` by default.
 - `--ignore-invalid-regex` : do not exit when invalid regex pattern encountered.
   Invalid regexes are ignored, but correct ones are tested. `false` by default.
-- `--ee` : (list) extension regex patterns. Accepts JS regexp patterns.
+- `--json` : json output. `false` by default.
 - `--libarchive`: path to libarchive library. When not provided,
   `/usr/lib/libarchive.so` is used by default.
 - `--libmagic`: path to libmagic library. When not provided,
   `/usr/lib/libmagic.so` is used by default.
+- `--pe` : (list) path regex patterns. Accepts JS regexp patterns.
+- `--unix-socket-path`: path to a unix socket on which argrep should send
+  results. It's expected that socket is being listened on already before
+  execution. When not provided, standard output is used by default.
+- `-v` : verbose logging. `false` by default.
 
 ### unnamed arguments
 
