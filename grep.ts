@@ -1,3 +1,6 @@
+import { readLines } from "https://deno.land/std@0.137.0/io/mod.ts";
+import { readerFromStreamReader } from "https://deno.land/std@0.137.0/streams/conversion.ts";
+
 export type isMimeTypeCb = (mime: string, filepath: string) => boolean;
 
 export type result = {
@@ -62,20 +65,20 @@ export async function grepFile(
     stdout: "piped",
   });
 
-  const output = await p.output();
-  const textOutput = new TextDecoder().decode(output);
-  const lines = textOutput.split("\n").filter((line) => line);
-  if (lines.length === 0) return [];
+  const results: result[] = [];
+  const stdoutReader = readerFromStreamReader(p.stdout.readable.getReader());
 
-  const results: result[] = lines.map((line) => {
+  for await (const line of readLines(stdoutReader)) {
     const [lineNumber, ...match] = line.split(":");
 
-    return {
-      path: filePath,
-      line: Number.parseInt(lineNumber),
-      match: match.join(":"),
-    };
-  });
+    results.push(
+      {
+        path: filePath,
+        line: Number.parseInt(lineNumber),
+        match: match.join(":"),
+      },
+    );
+  }
 
   return results;
 }
